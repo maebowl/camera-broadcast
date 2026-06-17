@@ -1,0 +1,14 @@
+name = "camera-broadcast"
+compatibility_date = "2024-12-01"
+
+# Static-only Worker: just serves the phone page (index.html, broadcast.js,
+# style.css). All signaling happens on the live/wall site.
+[assets]
+directory = "./public"
+
+# Attach to your custom domain. The mabelwallin.com zone must be on this
+# Cloudflare account. Remove this to use the free *.workers.dev URL, or set the
+# domain from the dashboard instead.
+routes = [
+  { pattern = "broadcast.mabelwallin.com", custom_domain = true }
+]

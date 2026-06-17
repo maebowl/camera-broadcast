@@ -1,0 +1,13 @@
+{
+  "name": "camera-broadcast",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Phone broadcaster page for the tournament camera wall. Captures the camera and streams it over WebRTC to the wall. Deploys to Cloudflare as broadcast.mabelwallin.com.",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

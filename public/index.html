@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"
+    />
+    <title>Camera Feed</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body class="broadcast-page">
+    <div class="phone">
+      <video id="preview" class="preview" autoplay muted playsinline></video>
+
+      <div class="phone-overlay">
+        <div class="top">
+          <span id="status" class="status">Ready</span>
+          <span class="pill"><span id="viewers">0</span> watching</span>
+        </div>
+
+        <div class="bottom">
+          <input
+            id="label"
+            class="label-input"
+            placeholder="Table name (e.g. Table 3)"
+            autocomplete="off"
+          />
+          <div class="btn-row">
+            <button id="start" class="btn primary">Go live</button>
+            <button id="switch" class="btn">Flip camera</button>
+          </div>
+          <p class="hint" id="hint">Tap “Go live”, then allow camera access when asked.</p>
+        </div>
+      </div>
+    </div>
+
+    <script src="/broadcast.js"></script>
+  </body>
+</html>
