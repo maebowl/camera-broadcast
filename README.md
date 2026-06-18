@@ -37,6 +37,23 @@ Git**).
 **Flip camera** switches rear/front. Phones must be on **HTTPS** to use the
 camera — your custom domain handles that automatically.
 
+## Keep the feed alive
+
+Phones pause the camera when the screen locks or you switch apps (iOS is strict
+about this), which makes the feed go black on the wall (shown there as **"No
+video — is the phone awake?"**). This page holds a screen **Wake Lock** while
+live, but for long sessions also:
+
+- Keep the broadcast page in the **foreground** (don't switch apps).
+- Set the phone's **auto-lock** to a long interval (or Never).
+- Keep the phone **plugged in**.
+
+If feeds go black for some phones but not others, that's usually a *network*
+issue (a direct connection is blocked) rather than the phone sleeping — the fix
+is a TURN relay, configured on the wall side. See the
+[`camera-feed`](https://github.com/maebowl/camera-feed) README → "Troubleshooting
+black-screen feeds".
+
 ## Options
 
 - Pre-fill a table name: `…?table=3`
