@@ -93,6 +93,23 @@ html, body {
   border-radius: 999px;
 }
 
+.sendstats {
+  position: absolute;
+  top: max(54px, calc(env(safe-area-inset-top) + 48px));
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: #cdd6e6;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.sendstats:empty { display: none; }
+
 .label-input {
   width: 100%;
   padding: 14px 16px;

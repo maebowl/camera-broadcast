@@ -58,6 +58,7 @@ const switchBtn = document.getElementById('switch');
 const statusEl = document.getElementById('status');
 const viewersEl = document.getElementById('viewers');
 const hintEl = document.getElementById('hint');
+const sendStatsEl = document.getElementById('sendstats');
 
 if (presetTable) labelInput.value = `Table ${presetTable}`;
 
@@ -168,11 +169,41 @@ async function offerTo(viewerId) {
 
   try {
     const offer = await pc.createOffer();
+    offer.sdp = boostBitrate(offer.sdp, QUALITY.kbps);
     await pc.setLocalDescription(offer);
     await applyEncoding(pc);
     sendSignal(viewerId, { sdp: pc.localDescription, label: currentLabel() });
   } catch {
     dropViewer(viewerId);
+  }
+}
+
+// Raise the bandwidth ceiling in the SDP (b=AS/b=TIAS on the video m-line) and,
+// for Chromium encoders, set a bitrate floor so static card tables don't get
+// starved into a soft, blurry image. Returns the original SDP on any error.
+function boostBitrate(sdp, kbps) {
+  try {
+    const lines = sdp.split(/\r?\n/);
+    const out = [];
+    let inVideo = false;
+    for (const line of lines) {
+      if (line.startsWith('m=')) inVideo = line.startsWith('m=video');
+      if (inVideo && line.startsWith('b=')) continue; // drop existing bandwidth caps
+      // Add a min/start bitrate floor to each video codec's fmtp (Chromium).
+      if (inVideo && line.startsWith('a=fmtp:')) {
+        const floor = Math.min(kbps, 2500);
+        out.push(line + `;x-google-min-bitrate=${floor};x-google-start-bitrate=${Math.min(kbps, 4000)}`);
+        continue;
+      }
+      out.push(line);
+      if (inVideo && line.startsWith('c=')) {
+        out.push('b=AS:' + kbps);
+        out.push('b=TIAS:' + kbps * 1000);
+      }
+    }
+    return out.join('\r\n');
+  } catch {
+    return sdp;
   }
 }
 
@@ -249,6 +280,49 @@ function setStatus(text, cls) {
   statusEl.className = 'status ' + (cls || '');
 }
 
+// ---- live send stats (what the phone is actually encoding & sending) --------
+let statsTimer = null;
+let lastOut = null;
+
+async function pollSendStats() {
+  const entry = viewers.values().next().value; // any active viewer connection
+  if (!entry) {
+    sendStatsEl.textContent = '';
+    lastOut = null;
+    return;
+  }
+  try {
+    const stats = await entry.pc.getStats();
+    let out = null;
+    stats.forEach((r) => {
+      if (r.type === 'outbound-rtp' && (r.kind === 'video' || r.mediaType === 'video')) out = r;
+    });
+    if (!out) return;
+    let kbps = 0;
+    if (lastOut && out.timestamp > lastOut.t) {
+      kbps = Math.round(((out.bytesSent - lastOut.bytes) * 8) / (out.timestamp - lastOut.t));
+    }
+    lastOut = { t: out.timestamp, bytes: out.bytesSent };
+    const w = out.frameWidth || 0;
+    const h = out.frameHeight || 0;
+    const fps = Math.round(out.framesPerSecond || 0);
+    sendStatsEl.textContent = `${w || '—'}×${h || '—'} · ${fps} fps · ${kbps ? kbps + ' kbps' : '…'}`;
+  } catch {
+    /* ignore */
+  }
+}
+
+function startSendStats() {
+  stopSendStats();
+  lastOut = null;
+  statsTimer = setInterval(pollSendStats, 1500);
+}
+function stopSendStats() {
+  if (statsTimer) clearInterval(statsTimer);
+  statsTimer = null;
+  sendStatsEl.textContent = '';
+}
+
 async function goLive() {
   setStatus('Starting camera…', 'warn');
   try {
@@ -262,6 +336,7 @@ async function goLive() {
   live = true;
   requestWakeLock();
   connect();
+  startSendStats();
 
   startBtn.textContent = 'Stop';
   startBtn.classList.remove('primary');
@@ -272,6 +347,7 @@ async function goLive() {
 
 function stop() {
   live = false;
+  stopSendStats();
   for (const id of [...viewers.keys()]) dropViewer(id);
   if (ws) ws.close();
   if (localStream) localStream.getTracks().forEach((t) => t.stop());
