@@ -99,6 +99,7 @@ function connect() {
   ws.onopen = () => {
     setStatus('Live', 'ok');
     ws.send(JSON.stringify({ type: 'join', role: 'broadcaster', room: ROOM, label: currentLabel() }));
+    sendState(); // push current life points so the wall has them immediately
   };
   ws.onclose = () => {
     if (live) {
@@ -298,3 +299,83 @@ switchBtn.addEventListener('click', async () => {
     setStatus('Could not switch camera', 'bad');
   }
 });
+
+// ---- life points ------------------------------------------------------------
+const lpState = { start: 8000, step: 500, lp: [8000, 8000] };
+
+const lpPanel = document.getElementById('lp-panel');
+const lpStartInput = document.getElementById('lp-start');
+const lpNameInputs = [...document.querySelectorAll('.lp-name')];
+const lpValEls = [...document.querySelectorAll('.lp-val')];
+
+function renderLpLocal() {
+  lpValEls.forEach((el, i) => (el.textContent = lpState.lp[i]));
+}
+
+function lpCurrentState() {
+  return {
+    start: lpState.start,
+    players: [0, 1].map((i) => ({ name: lpNameInputs[i].value.trim(), lp: lpState.lp[i] })),
+  };
+}
+
+// Send the life-point state to the wall (via the signaling channel).
+function sendState() {
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({ type: 'state', state: lpCurrentState() }));
+  }
+}
+
+function changeLp(i, delta) {
+  lpState.lp[i] = Math.max(0, lpState.lp[i] + delta);
+  renderLpLocal();
+  sendState();
+}
+
+function setLpExact(i, value) {
+  const n = parseInt(value, 10);
+  if (!Number.isFinite(n)) return;
+  lpState.lp[i] = Math.max(0, n);
+  renderLpLocal();
+  sendState();
+}
+
+function resetLp() {
+  lpState.lp = [lpState.start, lpState.start];
+  renderLpLocal();
+  sendState();
+}
+
+document.querySelectorAll('.step').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    lpState.step = parseInt(btn.dataset.step, 10) || 500;
+    document.querySelectorAll('.step').forEach((b) => b.classList.toggle('active', b === btn));
+  });
+});
+
+document.querySelectorAll('.lp-minus').forEach((btn) =>
+  btn.addEventListener('click', () => changeLp(Number(btn.dataset.p), -lpState.step))
+);
+document.querySelectorAll('.lp-plus').forEach((btn) =>
+  btn.addEventListener('click', () => changeLp(Number(btn.dataset.p), lpState.step))
+);
+
+lpValEls.forEach((el, i) =>
+  el.addEventListener('click', () => {
+    const who = lpNameInputs[i].value.trim() || `Player ${i + 1}`;
+    const v = prompt(`Set life points for ${who}`, lpState.lp[i]);
+    if (v !== null) setLpExact(i, v);
+  })
+);
+
+lpNameInputs.forEach((inp) => inp.addEventListener('input', sendState));
+
+lpStartInput.addEventListener('change', () => {
+  lpState.start = Math.max(0, parseInt(lpStartInput.value, 10) || 0);
+  sendState();
+});
+
+document.getElementById('lp-reset').addEventListener('click', resetLp);
+document.getElementById('lp-toggle').addEventListener('click', () => lpPanel.classList.toggle('hidden'));
+
+renderLpLocal();

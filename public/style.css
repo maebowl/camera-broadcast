@@ -130,3 +130,117 @@ html, body {
   color: #cdd6e6;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
 }
+
+/* ---------- life-point panel ---------- */
+.lp-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.62);
+  backdrop-filter: blur(6px);
+}
+.lp-panel.hidden { display: none; }
+
+.lp-steps {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.lp-steps-label {
+  font-size: 12px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.step {
+  flex: 1;
+  padding: 8px 0;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #1f2533;
+  color: var(--text);
+  cursor: pointer;
+}
+.step.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+.lp-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.lp-name {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  font-size: 15px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.5);
+  color: var(--text);
+}
+.lp-name::placeholder { color: var(--muted); }
+.lp-btn {
+  width: 48px;
+  height: 48px;
+  flex: none;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #1f2533;
+  color: var(--text);
+  cursor: pointer;
+}
+.lp-btn:active { transform: scale(0.95); }
+.lp-val {
+  min-width: 72px;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 8px;
+  border: 1px dashed transparent;
+}
+.lp-val:active { border-color: var(--accent); }
+
+.lp-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.lp-start-label {
+  font-size: 13px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.lp-start {
+  width: 88px;
+  padding: 8px 10px;
+  font-size: 15px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.5);
+  color: var(--text);
+}
+.lp-reset {
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #1f2533;
+  color: var(--text);
+  cursor: pointer;
+}
+.lp-reset:active { transform: scale(0.97); }

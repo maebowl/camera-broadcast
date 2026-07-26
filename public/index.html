@@ -31,6 +31,40 @@
         </div>
 
         <div class="bottom">
+          <div id="lp-panel" class="lp-panel hidden">
+            <div class="lp-steps">
+              <span class="lp-steps-label">Step</span>
+              <button type="button" class="step" data-step="100">100</button>
+              <button type="button" class="step active" data-step="500">500</button>
+              <button type="button" class="step" data-step="1000">1000</button>
+            </div>
+            <div class="lp-row">
+              <input class="lp-name" data-p="0" placeholder="Player 1" autocomplete="off" />
+              <button type="button" class="lp-btn lp-minus" data-p="0">−</button>
+              <span class="lp-val" data-p="0">8000</span>
+              <button type="button" class="lp-btn lp-plus" data-p="0">+</button>
+            </div>
+            <div class="lp-row">
+              <input class="lp-name" data-p="1" placeholder="Player 2" autocomplete="off" />
+              <button type="button" class="lp-btn lp-minus" data-p="1">−</button>
+              <span class="lp-val" data-p="1">8000</span>
+              <button type="button" class="lp-btn lp-plus" data-p="1">+</button>
+            </div>
+            <div class="lp-foot">
+              <label class="lp-start-label"
+                >Start
+                <input
+                  id="lp-start"
+                  class="lp-start"
+                  type="number"
+                  value="8000"
+                  inputmode="numeric"
+                />
+              </label>
+              <button type="button" id="lp-reset" class="lp-reset">Reset</button>
+            </div>
+          </div>
+
           <input
             id="label"
             class="label-input"
@@ -40,6 +74,7 @@
           <div class="btn-row">
             <button id="start" class="btn primary">Go live</button>
             <button id="switch" class="btn">Flip camera</button>
+            <button id="lp-toggle" class="btn">⚔ Life</button>
           </div>
           <p class="hint" id="hint">Tap “Go live”, then allow camera access when asked.</p>
         </div>
