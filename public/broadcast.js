@@ -13,6 +13,20 @@ const params = new URLSearchParams(location.search);
 const ROOM = params.get('room') || 'main';
 const presetTable = params.get('table');
 
+// Video quality. Tuned for reading card art/text over smooth motion: high
+// resolution + high bitrate + low frame rate, and tell the encoder to favour
+// detail. Override per phone with URL params, e.g. ?res=1440&fps=10&kbps=8000
+function clampInt(v, def, min, max) {
+  const n = parseInt(v, 10);
+  if (!Number.isFinite(n)) return def;
+  return Math.min(max, Math.max(min, n));
+}
+const QUALITY = {
+  height: clampInt(params.get('res'), 1080, 480, 2160), // vertical resolution
+  fps: clampInt(params.get('fps'), 12, 5, 30),
+  kbps: clampInt(params.get('kbps'), 5000, 500, 20000), // max bitrate
+};
+
 // Where the signaling Worker lives (the live/wall site).
 const SIGNAL_ORIGIN =
   params.get('signal') ||
@@ -53,20 +67,27 @@ async function openCamera() {
   localStream = await navigator.mediaDevices.getUserMedia({
     video: {
       facingMode: { ideal: facing },
-      width: { ideal: 1280 },
-      height: { ideal: 720 },
-      frameRate: { ideal: 24, max: 30 },
+      width: { ideal: Math.round((QUALITY.height * 16) / 9) },
+      height: { ideal: QUALITY.height },
+      frameRate: { ideal: QUALITY.fps, max: 30 },
     },
     audio: false,
   });
   preview.srcObject = localStream;
 
-  // If already live, swap the new camera into every existing connection.
+  // Ask the encoder to favour sharpness/detail over motion smoothness.
+  const track = localStream.getVideoTracks()[0];
+  if (track && 'contentHint' in track) track.contentHint = 'detail';
+
+  // If already live, swap the new camera into every connection and re-apply
+  // the high-quality encoding settings.
   if (live) {
-    const newTrack = localStream.getVideoTracks()[0];
     for (const { pc } of viewers.values()) {
       const sender = pc.getSenders().find((s) => s.track && s.track.kind === 'video');
-      if (sender) sender.replaceTrack(newTrack).catch(() => {});
+      if (sender) {
+        await sender.replaceTrack(track).catch(() => {});
+        applyEncoding(pc);
+      }
     }
   }
 }
@@ -147,7 +168,7 @@ async function offerTo(viewerId) {
   try {
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
-    await capBitrate(pc, 1200);
+    await applyEncoding(pc);
     sendSignal(viewerId, { sdp: pc.localDescription, label: currentLabel() });
   } catch {
     dropViewer(viewerId);
@@ -176,17 +197,29 @@ function dropViewer(viewerId) {
   updateViewerCount();
 }
 
-// Cap each stream's bitrate so many feeds don't saturate the wall's bandwidth.
-async function capBitrate(pc, kbps) {
+// Apply high-quality encoding: allow a high bitrate, cap the frame rate so bits
+// go to detail, never downscale the resolution, and keep resolution over
+// framerate when constrained.
+async function applyEncoding(pc) {
   for (const sender of pc.getSenders()) {
     if (!sender.track || sender.track.kind !== 'video') continue;
     const p = sender.getParameters();
     if (!p.encodings || !p.encodings.length) p.encodings = [{}];
-    p.encodings[0].maxBitrate = kbps * 1000;
+    p.encodings[0].maxBitrate = QUALITY.kbps * 1000;
+    p.encodings[0].maxFramerate = QUALITY.fps;
+    p.encodings[0].scaleResolutionDownBy = 1;
+    p.degradationPreference = 'maintain-resolution';
     try {
       await sender.setParameters(p);
     } catch {
-      /* not supported on some browsers; ignore */
+      // Some browsers reject degradationPreference in setParameters — retry
+      // without it so the bitrate/resolution settings still apply.
+      delete p.degradationPreference;
+      try {
+        await sender.setParameters(p);
+      } catch {
+        /* ignore */
+      }
     }
   }
 }

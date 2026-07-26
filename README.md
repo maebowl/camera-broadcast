@@ -61,8 +61,22 @@ black-screen feeds".
 - Point at a different signaling host (e.g. local dev):
   `…?signal=http://localhost:8787`
 
-## Tuning
+## Video quality
 
-Resolution, frame rate, and the per-feed bitrate cap (~1.2 Mbps) are set in
-[`public/broadcast.js`](public/broadcast.js) — lower them if the wall machine
-struggles with many feeds. Audio is off by default (set `audio: true` to enable).
+Defaults are tuned to make **card art and text readable** rather than smooth:
+**1080p, ~12 fps, up to 5 Mbps**, with the encoder told to prioritise detail and
+never drop resolution under load. Override per phone via URL params:
+
+- `?res=1440` — vertical resolution (480–2160; try 1440 if phone + wall handle it)
+- `?fps=10` — frame rate (5–30; lower = more bits per frame = sharper)
+- `?kbps=8000` — max bitrate in kbps (500–20000)
+
+e.g. `broadcast.mabelwallin.com?table=3&res=1440&fps=10&kbps=8000`
+
+Trade-offs:
+
+- The **wall decodes every feed**, so many high-res feeds tax the viewing
+  machine — dial `res`/`kbps` down if it lags.
+- If feeds relay through **TURN**, higher bitrate uses more relay bandwidth
+  (~16 feeds × 5 Mbps ≈ 36 GB/hour through Cloudflare).
+- Audio is off by default (set `audio: true` in `public/broadcast.js`).
