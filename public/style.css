@@ -198,7 +198,8 @@ html, body {
   cursor: pointer;
 }
 .lp-btn:active { transform: scale(0.95); }
-.lp-val {
+.lp-val,
+.chips-val {
   min-width: 72px;
   text-align: center;
   font-size: 22px;
@@ -209,7 +210,17 @@ html, body {
   border-radius: 8px;
   border: 1px dashed transparent;
 }
-.lp-val:active { border-color: var(--accent); }
+.lp-val:active,
+.chips-val:active { border-color: var(--accent); }
+
+.chips-row { margin-top: 2px; }
+.chips-label {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffd25e;
+}
 
 .lp-foot {
   display: flex;

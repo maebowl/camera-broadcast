@@ -300,21 +300,24 @@ switchBtn.addEventListener('click', async () => {
   }
 });
 
-// ---- life points ------------------------------------------------------------
-const lpState = { start: 8000, step: 500, lp: [8000, 8000] };
+// ---- duel state: life points + star chips wagered ---------------------------
+const lpState = { start: 8000, step: 500, lp: [8000, 8000], chips: 1 };
 
 const lpPanel = document.getElementById('lp-panel');
 const lpStartInput = document.getElementById('lp-start');
 const lpNameInputs = [...document.querySelectorAll('.lp-name')];
 const lpValEls = [...document.querySelectorAll('.lp-val')];
+const chipsValEl = document.getElementById('chips-val');
 
 function renderLpLocal() {
   lpValEls.forEach((el, i) => (el.textContent = lpState.lp[i]));
+  chipsValEl.textContent = lpState.chips;
 }
 
 function lpCurrentState() {
   return {
     start: lpState.start,
+    chips: lpState.chips,
     players: [0, 1].map((i) => ({ name: lpNameInputs[i].value.trim(), lp: lpState.lp[i] })),
   };
 }
@@ -373,6 +376,25 @@ lpNameInputs.forEach((inp) => inp.addEventListener('input', sendState));
 lpStartInput.addEventListener('change', () => {
   lpState.start = Math.max(0, parseInt(lpStartInput.value, 10) || 0);
   sendState();
+});
+
+function changeChips(delta) {
+  lpState.chips = Math.max(0, lpState.chips + delta);
+  renderLpLocal();
+  sendState();
+}
+
+document.querySelector('.chips-minus').addEventListener('click', () => changeChips(-1));
+document.querySelector('.chips-plus').addEventListener('click', () => changeChips(1));
+chipsValEl.addEventListener('click', () => {
+  const v = prompt('Star chips wagered at this duel', lpState.chips);
+  if (v === null) return;
+  const n = parseInt(v, 10);
+  if (Number.isFinite(n)) {
+    lpState.chips = Math.max(0, n);
+    renderLpLocal();
+    sendState();
+  }
 });
 
 document.getElementById('lp-reset').addEventListener('click', resetLp);
