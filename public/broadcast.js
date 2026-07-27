@@ -39,6 +39,24 @@ function signalingWsUrl() {
   return `${base}/ws?room=${encodeURIComponent(ROOM)}`;
 }
 
+// Stable per-tab identity so a reconnect REPLACES this phone's tile on the wall
+// instead of creating a dead duplicate. sessionStorage keeps it stable across
+// reloads in this tab, but distinct across devices and tabs.
+const UID = (() => {
+  const fresh = () =>
+    crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random();
+  try {
+    let id = sessionStorage.getItem('camerawall.uid');
+    if (!id) {
+      id = fresh();
+      sessionStorage.setItem('camerawall.uid', id);
+    }
+    return id;
+  } catch {
+    return fresh();
+  }
+})();
+
 let ws;
 let myId = null;
 let iceServers = [{ urls: ['stun:stun.l.google.com:19302'] }];
@@ -99,7 +117,9 @@ function connect() {
 
   ws.onopen = () => {
     setStatus('Live', 'ok');
-    ws.send(JSON.stringify({ type: 'join', role: 'broadcaster', room: ROOM, label: currentLabel() }));
+    ws.send(
+      JSON.stringify({ type: 'join', role: 'broadcaster', room: ROOM, label: currentLabel(), uid: UID })
+    );
     sendState(); // push current life points so the wall has them immediately
   };
   ws.onclose = () => {
